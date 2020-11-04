@@ -1,0 +1,432 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define N 30
+#define M 6
+/************
+**文件名：scoresystem
+**创建者：黄振业
+**日期：2020.10.27
+************/
+int ReadScore(int score[N][M],long int stuID[N],char sname[N][20],int a);
+void PrintScore(int score[N][M],int printScore[N],int stuID[N],int (*compare)(int a,int b),int cournum);
+int ScoreMaxtoMin(int a,int b);
+int ScoreMintoMax(int a,int b);
+void Caculate1(int score[N][M],int stunum,int cournum);
+void Caculate2(int score[N][M],int stunum,int cournum);
+void AnalysisScore(int score[N][M],int stunum,int cournum);
+void SortbyCha(char name[N][20],int rank[N],int n,int m);
+void SortbyID(long stID[N],int rank[N],int n,int m);
+void Sortscore1(int score[N][M],int printScore[N],int stunum,int cournum,int vscore[N][M],long stuID[N],long vstuID[N]);
+void Sortscore2(int score[N][M],int printScore[N],int stunum,int cournum,int vscore[N][M],char sname[N][M],char vsname[N][M]);
+/***********
+***readscore 函数功能：读入学号和成绩；
+             函数入口参数：整型数组score表示成绩，长整型数组stuID表示学号
+             函数无返回值
+***printfScore 函数功能：按要求输出学生成绩
+               函数入口参数：整型数组score表示成绩，长整型数组stuID表示学号，整型数组printfscore用于复制成绩并进行操作，指针函数用于表示不同条件
+***scoremaxtomin 函数功能：用于给printscore函数条件
+                 函数入口参数：a,b数组中的两个元素
+***scoremintomax 函数功能：用于给printscore函数条件
+                 函数入口参数：a,b数组中的两个元素
+***caculate 函数功能：计算总和和平均数
+            函数入口参数：整型数组score表示成绩，长整型数组stuID表示学号
+            函数无返回值
+***analysisscore 函数功能：算出各阶段人数所占比例
+                 函数入口参数：整型数组score表示成绩，长整型数组stuID表示学号
+                 函数无返回值
+************/
+
+int main()
+{
+    int score[N][M],printScore[N][M],choice,i,j,l,a,temp,stunum,cournum,rank[N];
+    long stuID[N],b;
+    char sname[N][20],c[20];
+    printf("1.Input record\n2.List record\n3.Caculate total and average score of course\n4.Sort in descending order by score\n5.Sort in ascending order by score\n6.Sort in ascending order by studentID\n7.Sort in dictionary order by name\n8.Search by StudentID\n9.Search by name\n10.Statistic analysis\n0.Exit\n");
+    do
+    {
+        printf("Please input your choice:");
+        scanf("%d",&choice);//输入选择
+        switch(choice)
+        {
+        case 1:
+        {
+            printf("please input the number of the courses:");
+            scanf("%d",&cournum);
+            stunum = ReadScore(score,stuID,sname,cournum);
+            printf("\n");
+            break;
+        }
+        case 2:
+        {
+            for(i = 0; stuID[i]>0; i++)
+            {
+                printf("%-5ld",stuID[i]);
+                puts(sname[i]);
+                for(j = 0;j<cournum;j++)
+                {
+                    printf("%3d",score[i][j]);
+                }
+                printf("\n");
+            }
+            break;
+        }
+        case 3:
+        {
+            Caculate1(score,stunum,cournum);
+            break;
+        }
+        case 4:
+            {
+                Caculatr2(score,stunum,cournum);
+                break;
+            }
+        case 5:
+        {
+            PrintScore(score,printScore,stuID,ScoreMaxtoMin,cournum);
+            printf("\n");
+            break;
+        }
+        case 6:
+        {
+            PrintScore(score,printScore,stuID,ScoreMintoMax,cournum);
+            printf("\n");
+            break;
+        }
+        case 7:
+        {
+            SortbyID(stuID,rank,stunum,cournum);
+            for(i = 0;i<stunum;i++)
+            {
+                printf("%5ld",stuID[rank[i]]);
+                for(j = 0;j<cournum;j++)
+                {
+                    printf("%3d",score[rank[i]][j]);
+                }
+                printf("\n");
+            }
+            break;
+        }
+        case 8:
+            {
+            SortbyCha(sname,rank,stunum,cournum);
+            for(i = 0;i<stunum;i++)
+            {
+                printf("%s",sname[rank[i]]);
+                for(j = 0;j<cournum;j++)
+                {
+                    printf("%3d",score[rank[i]][j]);
+                }
+                printf("\n");
+            }
+            break;
+        }
+        case 9:
+        {
+            int find = 0,vscore[N][M];
+            long int vstuID[N];
+            printf("please input the student ID:");
+            scnaf("%ld",b);
+            printf("\n");
+            Sortscore1(score,printScore,stunum,cournum,vscore,stuID,vstuID);
+            for(i = 0;i<stunum;i++)
+            {
+                if(b == vstuID[i])
+                {
+                    printf("%d",i+1);
+                    for(j = 0;j<cournum;j++)
+                    {
+                        printf("%3d",vscore[i][j]);
+                        find = 1;
+                    }
+                break;
+                }
+            }
+            if(find == 0)
+            {
+                printf("can not find the student!");
+            }
+            printf("\n");
+            break;
+        }
+        case 10:
+        {
+            int find = 0,vscore[N][M];
+            char vsname[N][M];
+            printf("please input the student's name:");
+            gets(c);
+            printf("\n");
+            Sortscore(score,printScore,stunum,cournum,vscore,sname,vsname);
+            for(i = 0;i<stunum;i++)
+            {
+                if((strcmp(c,vsname[i]))==0)
+                {
+                    printf("%d %s",i+1,vsname[i]);
+
+                break;
+                }
+            }
+            if(find == 0)
+            {
+                printf("can not find the student!");
+            }
+            break;
+        }
+        case 11:
+        {
+            AnalysisScore(score,stunum,cournum);
+            printf("\n");
+            break;
+        }
+        default:
+            printf("it's not a right order!");//当输入选择错误时输出该语句
+        }
+    }
+    while(choice != 0);//当选择0时结束循环
+    return 0;
+}
+int ReadScore(int score[N][M],long stuID[N],char sname[N][20],int a)
+{
+    int i,j;
+    for(i = 0; i<N; i++)
+    {
+        scanf("%ld",&stuID[i]);
+        if(stuID[i]<0)//当输入学号小于0时结束输入
+        {
+            break;
+        }
+        getchar();
+        gets(sname[i]);
+        printf("Please input the score of every course:\n");
+        for(j = 0;j<a;j++)
+        {
+            scanf("%d",&score[i][j]);
+        }
+    }
+    return i;
+}
+void PrintScore(int score[N][M],int printScore[N],int stuID[N],int (*compare)(int a,int b),int cournum)
+{
+    int k,i,j,l,m,n,temp;
+    for(m = 0; stuID[m]>=0; m++)
+    {
+        printScore[m] = 0;
+        for(n = 0;n<cournum;n++)
+        {
+            printScore[m] = printScore[m]+score[m][n];
+        }
+    }
+    for(i = 0; stuID[i]>=0; i++)
+    {
+        k = i;
+        for(j = i+1; stuID[j]>=0; j++)
+        {
+            if((*compare)(printScore[k],printScore[j]))
+                k = j;
+        }
+        if(k!=i)//当k!=j时，说明k指向最值，将k赋值给i
+        {
+            temp = printScore[i];
+            printScore[i] = printScore[k];
+            printScore[k] = temp;
+        }
+    }
+    for(l = 0; stuID[l]>=0; l++)
+    {
+        printf("%4d",printScore[l]);
+    }
+    return;
+}
+int ScoreMaxtoMin(int a,int b)
+{
+    return a<b;
+}
+int ScoreMintoMax(int a,int b)
+{
+    return a>b;
+}
+void Caculate1(int score[N][M],int stunum,int cournum)
+{
+    int i,j;
+    static int sum[N];
+    for(i = 0; i<cournum; i++)
+    {
+        for(j = 0;j<stunum;j++)
+        {
+            sum[i] = sum[i]+score[j][i];
+        }
+        printf("%d,%f\n",sum[i],(float)sum[i]/stunum);
+    }
+}
+void Caculate2(int score[N][M],int stunum,int cournum)
+{
+    int i,j;
+    static int sum[N];
+    for(i = 0; i<stunum; i++)
+    {
+        for(j = 0;j<cournum;j++)
+        {
+            sum[i] = sum[i]+score[i][j];
+        }
+        printf("%d,%f\n",sum[i],(float)sum[i]/cournum);
+    }
+}
+void AnalysisScore(int score[N][M],int stunum,int cournum)
+{
+    int i,p,j = 0,k = 0,l = 0,m = 0,n = 0;
+    for(p = 0;p<cournum;p++)
+    {
+    for(i = 0; i<stunum; i++)//给各成绩段分类，并记录
+    {
+        if(score[i][p]>=90&&score[i][p]<=100)j++;
+        else if(score[i][p]>=80&&score[i][p]<90)k++;
+        else if(score[i][p]>=70&&score[i][p]<80)l++;
+        else if(score[i][p]>=60&&score[i][p]<70)m++;
+        else n++;
+    }
+    printf("课程%d:优秀人数为%d,占%f\n良好人数为%d,占%f\n中等人数为%d,占%f\n及格人数为%d,占%f\n不及格人数为%d,占%f\n",p+1,j,(float)j/i,k,(float)k/i,l,(float)l/i,m,(float)m/i,n,(float)n/i);
+    }
+}
+void SortbyCha(char name[N][20],int rank[N],int n,int m)
+{
+    int i,j,k,temp1;
+    char temp[20],sname[N][M];
+    for(i = 0;i<n;i++)
+    {
+        strcpy(sname[i],name[i]);
+    }
+    for(i = 0;i<n;i++)
+    {
+        rank[i] = i;
+    }
+    for(i = 0;i<n-1;i++)
+    {
+        for(j = i+1;j<n;j++)
+        {
+            if((strcmp(sname[k],sname[j]))>0)
+            {
+                k = j;
+            }
+        }
+        if(k != i)
+        {
+            strcpy(temp,sname[i]);
+            strcpy(sname[i],sname[k]);
+            strcpy(sname[k],temp);
+            temp1 = rank[i];
+            rank[i] = rank[k];
+            rank[k] = temp;
+        }
+    }
+}
+void SortbyID(long stID[N],int rank[N],int n,int m)
+{
+    int i,j,k,temp,stuID[N];
+    for(i = 0;i<n;i++)
+    {
+        stuID[i] = stID[i];
+    }
+    for(i = 0;i<n;i++)
+    {
+        rank[i] = i;
+    }
+    for(i = 0;i<n-1;i++)
+    {
+        for(j = i+1;j<n;j++)
+        {
+            if(stuID[k]>stuID[j])
+            {
+                k = j;
+            }
+        }
+        if(k != i)
+        {
+            temp = stuID[i];
+            stuID[i] = stuID[k];
+            stuID[k] = temp;
+            temp = rank[i];
+            rank[i] = rank[k];
+            rank[k] = temp;
+        }
+    }
+}
+void Sortscore1(int score[N][M],int printScore[N],int stunum,int cournum,int vscore[N][M],long stuID[N],long vstuID[N])
+{
+    int temp,i,j,k,l;
+    for(i = 0;i<stunum;i++)
+    {
+        printScore[i] = 0;
+        for(j = 0;j<cournum;j++)
+        {
+            printScore[i] = printScore[i]+score[i][j];
+            vscore[i][j] = score[i][j];
+        }
+        vstuID[i] = stuID[i];
+    }
+    for(i = 0;i<stunum-1;i++)
+    {
+        for(j = i+1;j<stunum;j++)
+        {
+            if(printScore[k]>printScore[j])
+            {
+                k = j;
+            }
+        }
+        if(k!=i)
+        {
+            temp = printScore[i];
+            printScore[i] = printScore[k];
+            printScore[k] = temp;
+            temp = vstuID[i];
+            vstuID[i] = vstuID[k];
+            vstuID[k] = temp;
+            for(l = 0;l<cournum;l++)
+            {
+                temp = vscore[i][l];
+                vscore[i][l] = vscore[k][l];
+                vscore[k][l] = temp;
+            }
+        }
+    }
+}
+void Sortscore2(int score[N][M],int printScore[N],int stunum,int cournum,int vscore[N][M],char sname[N][M],char vsname[N][M])
+{
+    int i,j,k,temp,l;
+    char temp1[20];
+    for(i = 0;i<stunum;i++)
+    {
+        printScore[i] = 0;
+        for(j = 0;j<cournum;j++)
+        {
+            printScore[i] = printScore[i]+score[i][j];
+            vscore[i][j] = score[i][j];
+        }
+        strcpy(vsname[i],sname[i]);
+    }
+    for(i = 0;i<stunum-1;i++)
+    {
+        for(j = i+1;j<stunum;j++)
+        {
+            if(printScore[k]>printScore[j])
+            {
+                k = j;
+            }
+        }
+        if(k!=i)
+        {
+            temp = printScore[i];
+            printScore[i] = printScore[k];
+            printScore[k] = temp;
+            strcpy(temp1,vsname[i]);
+            strcpy(vsname[i],vsname[k]);
+            strcpy(vsname[k],temp1);
+            for(l = 0;l<cournum;l++)
+            {
+                temp = vscore[i][l];
+                vscore[i][l] = vscore[k][l];
+                vscore[k][l] = temp;
+            }
+        }
+    }
+}
+
